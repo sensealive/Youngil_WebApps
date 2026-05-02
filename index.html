@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 명절 선물 뽑기</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background: #07071a;
+  min-height: 100vh;
+  color: white;
+  overflow: hidden;
+}
+
+/* ========== STARS ========== */
+#stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.4); }
+}
+
+/* ========== FILE SCREEN ========== */
+#file-screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  background: radial-gradient(ellipse at 50% 40%, #1a0a3e 0%, #07071a 70%);
+}
+.file-card {
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  padding: 52px 60px;
+  text-align: center;
+  max-width: 480px;
+  width: 92%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 100px rgba(120,60,220,0.12);
+  animation: floatCard 4s ease-in-out infinite;
+}
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+.file-icon { font-size: 5rem; margin-bottom: 22px; display: block; animation: spin 6s linear infinite; }
+@keyframes spin {
+  0% { transform: rotate(-8deg) scale(1); }
+  25% { transform: rotate(8deg) scale(1.1); }
+  50% { transform: rotate(-5deg) scale(1); }
+  75% { transform: rotate(6deg) scale(1.08); }
+  100% { transform: rotate(-8deg) scale(1); }
+}
+.file-title {
+  font-size: 2.3rem; font-weight: 900; margin-bottom: 12px;
+  background: linear-gradient(135deg, #ffd700, #ff6b9d, #a78bfa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.file-subtitle {
+  color: rgba(255,255,255,0.6); font-size: 0.98rem; line-height: 1.8; margin-bottom: 30px;
+}
+.file-subtitle strong { color: #ffd700; }
+.drop-zone {
+  border: 2px dashed rgba(255,215,0,0.35);
+  border-radius: 16px; padding: 26px 20px; margin-bottom: 18px;
+  cursor: pointer; transition: all 0.3s; background: rgba(255,215,0,0.03);
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: #ffd700; background: rgba(255,215,0,0.09); transform: scale(1.02);
+}
+.drop-zone-text { color: rgba(255,255,255,0.5); font-size: 0.93rem; }
+#fileInput { display: none; }
+.btn-load {
+  width: 100%; padding: 15px; font-family: inherit;
+  background: linear-gradient(135deg, #6c5ce7, #a78bfa);
+  border: none; border-radius: 14px;
+  color: white; font-size: 1.1rem; font-weight: 700;
+  cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 6px 22px rgba(108,92,231,0.45);
+}
+.btn-load:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(108,92,231,0.65); }
+
+/* ========== MAIN SCREEN ========== */
+#main-screen {
+  display: none; flex-direction: column; height: 100vh;
+  position: relative; z-index: 1;
+}
+
+/* ---- Header ---- */
+#header {
+  display: flex; align-items: center;
+  padding: 0 24px; height: 68px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0; position: relative;
+}
+#title {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  font-size: 1.85rem; font-weight: 900; white-space: nowrap;
+  background: linear-gradient(90deg, #ffd700, #ff6b9d, #a78bfa, #48dbfb, #ffd700);
+  background-size: 300% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: shimmerTitle 4s linear infinite;
+}
+@keyframes shimmerTitle {
+  0% { background-position: 0% center; }
+  100% { background-position: 300% center; }
+}
+#startBtn {
+  margin-left: auto; padding: 10px 22px;
+  background: linear-gradient(135deg, #ff6b9d, #ffd700);
+  border: none; border-radius: 25px;
+  color: white; font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(255,107,157,0.45); white-space: nowrap;
+}
+#startBtn:hover:not(:disabled) {
+  transform: scale(1.06) translateY(-1px);
+  box-shadow: 0 8px 28px rgba(255,107,157,0.65);
+}
+#startBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---- Timer ---- */
+#timer-bar {
+  text-align: center; flex-shrink: 0;
+  height: 78px; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.15);
+}
+#timer {
+  font-size: 4rem; font-weight: 900;
+  color: #ffd700; display: inline-block; min-width: 90px; text-align: center;
+  text-shadow: 0 0 30px rgba(255,215,0,0.55), 0 0 60px rgba(255,215,0,0.25);
+  transition: color 0.2s;
+}
+#timer.beat { animation: timerBeat 0.45s cubic-bezier(0.36,0.07,0.19,0.97) forwards; }
+@keyframes timerBeat {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.65); color: #ff6b6b;
+         text-shadow: 0 0 40px rgba(255,107,107,0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Play area ---- */
+#play-area { flex: 1; position: relative; overflow: hidden; }
+
+/* ---- Slots ---- */
+#slots-container {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px; padding: 10px 20px 14px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.slot {
+  width: 116px; min-height: 116px;
+  border: 2px solid rgba(255,215,0,0.28);
+  border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255,215,0,0.05);
+  transition: border-color 0.5s, background 0.5s, box-shadow 0.5s;
+  padding: 8px 6px;
+}
+.slot.filled {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.14);
+  box-shadow: 0 0 22px rgba(255,215,0,0.28), inset 0 0 18px rgba(255,215,0,0.06);
+}
+.slot-number {
+  font-size: 3.2rem; font-weight: 900;
+  color: #ffd700; line-height: 1;
+}
+.slot-name {
+  font-size: 1.1rem; color: rgba(255,255,255,0.92);
+  margin-top: 5px; text-align: center;
+  max-width: 110px; word-break: break-all; line-height: 1.3;
+  opacity: 0; transform: scale(0.3) translateY(6px);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.34,1.56,0.64,1);
+}
+.slot.filled .slot-name { opacity: 1; transform: scale(1) translateY(0); }
+
+/* ---- Name cards ---- */
+.name-card {
+  position: absolute; padding: 12px 24px;
+  border-radius: 30px; font-weight: 700; font-size: 1.75rem;
+  color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.55);
+  box-shadow: 0 5px 22px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+  white-space: nowrap; pointer-events: none; z-index: 20;
+  will-change: left, top, transform, opacity;
+  transition: none;
+}
+
+/* ---- Result message ---- */
+#result-msg {
+  display: none; position: absolute;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,107,157,0.18));
+  border: 1px solid rgba(255,215,0,0.45);
+  border-radius: 22px; padding: 11px 32px;
+  font-size: 1.25rem; font-weight: 700;
+  color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.5);
+  white-space: nowrap; z-index: 30;
+  animation: resultPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes resultPop {
+  from { transform: translateX(-50%) scale(0); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* ---- Confetti ---- */
+.cp { position: fixed; pointer-events: none; z-index: 500; border-radius: 2px; }
+@keyframes cpFall {
+  0%   { transform: translateY(0) rotate(var(--rs,0deg)); opacity: 1; }
+  85%  { opacity: 0.8; }
+  100% { transform: translateY(110vh) rotate(var(--re,540deg)); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- ===== FILE SCREEN ===== -->
+<div id="file-screen">
+  <div class="file-card">
+    <span class="file-icon">🎁</span>
+    <h1 class="file-title">명절 선물 뽑기</h1>
+    <p class="file-subtitle">
+      참가자 이름이 담긴<br>
+      <strong>Participants.txt</strong> 파일을 불러오세요
+    </p>
+    <div class="drop-zone" id="dropZone">
+      <p class="drop-zone-text">📂 클릭하거나 파일을 여기에 드래그하세요</p>
+    </div>
+    <input type="file" id="fileInput" accept=".txt">
+    <button class="btn-load" id="loadBtn">파일 선택하기</button>
+  </div>
+</div>
+
+<!-- ===== MAIN SCREEN ===== -->
+<div id="main-screen">
+  <header id="header">
+    <div style="flex:1"></div>
+    <h1 id="title">🎁 선물 뽑기 🎁</h1>
+    <div style="flex:1;display:flex;justify-content:flex-end">
+      <button id="startBtn" onclick="handleStartBtn()">🎊 뽑기시작</button>
+    </div>
+  </header>
+
+  <div id="timer-bar">
+    <span id="timer">🎁</span>
+  </div>
+
+  <div id="play-area">
+    <div id="result-msg">🎉 추첨 완료! 결과를 확인하세요 🎉</div>
+    <div id="slots-container"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ─────────────────────────────────────────
+   CONSTANTS
+   ───────────────────────────────────────── */
+const GRADIENTS = [
+  ['#ff6b6b','#feca57'], ['#48dbfb','#1dd1a1'], ['#ff9ff3','#f368e0'],
+  ['#54a0ff','#5f27cd'], ['#fd79a8','#e84393'], ['#55efc4','#00b894'],
+  ['#ff9f43','#ee5a24'], ['#a29bfe','#6c5ce7'], ['#00cec9','#0984e3'],
+  ['#e17055','#d63031'], ['#badc58','#6ab04c'], ['#f9ca24','#f0932b'],
+  ['#7bed9f','#2ed573'], ['#eccc68','#ffa502'], ['#70a1ff','#1e90ff'],
+];
+
+/* ─────────────────────────────────────────
+   STATE
+   ───────────────────────────────────────── */
+let participants = [];
+let cardObjs     = [];   // {name, el, x, y, vx, vy, rot, assignment}
+let slotEls      = [];
+let animId       = null;
+let cntId        = null;
+let timeLeft     = 10;
+let drawPhase    = 'idle'; // idle | floating | settling | done
+let audioCtx     = null;
+let bgIntId      = null;
+
+/* ─────────────────────────────────────────
+   AUDIO ENGINE
+   ───────────────────────────────────────── */
+function ac() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function tone(freq, dur, type = 'sine', vol = 0.22, delay = 0) {
+  const ctx = ac();
+  const osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  osc.connect(g); g.connect(ctx.destination);
+  const t = ctx.currentTime + delay;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.start(t); osc.stop(t + dur + 0.05);
+}
+
+function playTick(n) {
+  if (n === 0) return;
+  const freq = n <= 3 ? (n === 1 ? 1047 : 880) : 660;
+  tone(freq, 0.1, 'square', 0.18);
+}
+
+function playWhoosh() {
+  const ctx = ac();
+  const len  = Math.floor(ctx.sampleRate * 0.45);
+  const buf  = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const flt = ctx.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = 400;
+  const g   = ctx.createGain(); g.gain.value = 0.5;
+  src.connect(flt); flt.connect(g); g.connect(ctx.destination);
+  src.start();
+}
+
+function playFanfare() {
+  // 밝은 C장조 팡파르
+  const m = [
+    [523.25, 0.12, 0.30, 0.00],
+    [659.25, 0.12, 0.30, 0.13],
+    [783.99, 0.12, 0.30, 0.26],
+    [1046.5, 0.50, 0.42, 0.39],
+    [783.99, 0.12, 0.28, 0.68],
+    [1046.5, 0.70, 0.44, 0.82],
+  ];
+  m.forEach(([f,d,v,dl]) => tone(f, d, 'triangle', v, dl));
+  tone(261.63, 0.42, 'sine', 0.20, 0.39);
+  tone(261.63, 0.70, 'sine', 0.20, 0.82);
+}
+
+function playCheer() {
+  // 짧은 효과음 — 카드가 슬롯에 닿을 때
+  tone(880, 0.08, 'sine', 0.15);
+  tone(1108, 0.08, 'sine', 0.12, 0.06);
+}
+
+function startBgMusic() {
+  const seq = [523, 659, 784, 880, 1047, 880, 784, 659];
+  let i = 0;
+  bgIntId = setInterval(() => {
+    if (drawPhase !== 'floating') return;
+    tone(seq[i % seq.length], 0.22, 'triangle', 0.07);
+    i++;
+  }, 190);
+}
+
+function stopBgMusic() {
+  if (bgIntId) { clearInterval(bgIntId); bgIntId = null; }
+}
+
+/* ─────────────────────────────────────────
+   BACKGROUND STARS
+   ───────────────────────────────────────── */
+function buildStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 110; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.4 + 0.5;
+    Object.assign(s.style, {
+      left:              Math.random() * 100 + 'vw',
+      top:               Math.random() * 100 + 'vh',
+      width:             sz + 'px',
+      height:            sz + 'px',
+      opacity:           (Math.random() * 0.5 + 0.1).toFixed(2),
+      animation:         `twinkle ${1.4 + Math.random() * 2.6}s ${(Math.random()*3).toFixed(1)}s ease-in-out infinite`,
+    });
+    container.appendChild(s);
+  }
+}
+
+/* ─────────────────────────────────────────
+   FILE LOADING
+   ───────────────────────────────────────── */
+function parseNames(text) {
+  return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+}
+
+function initApp(names) {
+  if (!names.length) return alert('이름을 찾을 수 없습니다.');
+  participants = names;
+  document.getElementById('file-screen').style.display = 'none';
+  const ms = document.getElementById('main-screen');
+  ms.style.display = 'flex';
+  // Wait 2 frames so layout is computed
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    buildSlots();
+    buildCards();
+    beginIdleFloat();
+  }));
+}
+
+document.getElementById('loadBtn').onclick    = () => document.getElementById('fileInput').click();
+document.getElementById('dropZone').onclick   = () => document.getElementById('fileInput').click();
+
+document.getElementById('fileInput').addEventListener('change', function () {
+  const f = this.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => initApp(parseNames(e.target.result));
+  r.readAsText(f, 'UTF-8');
+});
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) { const r = new FileReader(); r.onload = ev => initApp(parseNames(ev.target.result)); r.readAsText(f,'UTF-8'); }
+});
+
+// Auto-load Participants.txt if served over HTTP
+(async () => {
+  try {
+    const res = await fetch('Participants.txt');
+    if (res.ok) { const t = await res.text(); const n = parseNames(t); if (n.length) initApp(n); }
+  } catch (_) { /* file:// protocol — user must pick file manually */ }
+})();
+
+/* ─────────────────────────────────────────
+   BUILD UI
+   ───────────────────────────────────────── */
+function buildSlots() {
+  const c = document.getElementById('slots-container');
+  c.innerHTML = ''; slotEls = [];
+  participants.forEach((_, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'slot'; slot.id = 'slot' + (i+1);
+    slot.innerHTML = `<div class="slot-number">${i+1}</div><div class="slot-name" id="sn${i+1}"></div>`;
+    c.appendChild(slot); slotEls.push(slot);
+  });
+}
+
+function buildCards() {
+  document.querySelectorAll('.name-card').forEach(e => e.remove());
+  cardObjs = [];
+  const pa  = document.getElementById('play-area');
+  const sc  = document.getElementById('slots-container');
+  const W   = pa.clientWidth;
+  const SH  = sc.offsetHeight || 160;
+  const H   = pa.clientHeight - SH - 20;
+  const n   = participants.length;
+
+  participants.forEach((name, i) => {
+    const [c1, c2] = GRADIENTS[i % GRADIENTS.length];
+    const el = document.createElement('div');
+    el.className = 'name-card';
+    el.textContent = name;
+    el.style.background = `linear-gradient(135deg,${c1},${c2})`;
+    pa.appendChild(el);
+
+    // Spread cards evenly across the floating zone
+    const cols  = Math.ceil(Math.sqrt(n));
+    const rows  = Math.ceil(n / cols);
+    const col   = i % cols;
+    const row   = Math.floor(i / cols);
+    const gx    = W * 0.08 + (col / Math.max(cols-1, 1)) * W * 0.84;
+    const gy    = H * 0.08 + (row / Math.max(rows-1, 1)) * H * 0.78;
+    const x     = Math.max(0, Math.min(W - 160, gx + (Math.random()-0.5)*50));
+    const y     = Math.max(0, Math.min(H - 44,  gy + (Math.random()-0.5)*30));
+
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+
+    cardObjs.push({ name, el, x, y, vx: 0, vy: 0, rot: 0, assignment: 0 });
+  });
+}
+
+/* ─────────────────────────────────────────
+   ANIMATION LOOPS
+   ───────────────────────────────────────── */
+function stopAnim() { if (animId) { cancelAnimationFrame(animId); animId = null; } }
+
+function getBounds(card) {
+  const pa = document.getElementById('play-area');
+  const sc = document.getElementById('slots-container');
+  return {
+    maxX: pa.clientWidth  - (card.el.offsetWidth  || 160),
+    maxY: pa.clientHeight - (sc.offsetHeight || 160) - 20 - (card.el.offsetHeight || 52),
+  };
+}
+
+/* Gentle idle float — sinusoidal */
+function beginIdleFloat() {
+  drawPhase = 'idle';
+  const base = cardObjs.map(c => ({ x: c.x, y: c.y }));
+  let t = 0;
+  function loop() {
+    if (drawPhase !== 'idle') return;
+    t += 0.011;
+    cardObjs.forEach((card, i) => {
+      const bx  = base[i].x, by = base[i].y;
+      const amp = 13;
+      const fx  = 0.38 + (i * 0.19) % 0.42;
+      const fy  = 0.28 + (i * 0.14) % 0.38;
+      const px  = i * 1.2, py = i * 0.85;
+      const { maxX, maxY } = getBounds(card);
+      card.x = Math.max(0, Math.min(maxX, bx + Math.sin(t*fx+px)*amp));
+      card.y = Math.max(0, Math.min(maxY, by + Math.cos(t*fy+py)*amp));
+      card.el.style.left = card.x + 'px';
+      card.el.style.top  = card.y + 'px';
+    });
+    animId = requestAnimationFrame(loop);
+  }
+  animId = requestAnimationFrame(loop);
+}
+
+/* Wild chaos float — random-walk velocity */
+function beginChaosFloat() {
+  drawPhase = 'floating';
+  cardObjs.forEach(card => {
+    card.vx  = (Math.random()-0.5) * 12;
+    card.vy  = (Math.random()-0.5) * 12;
+    card.rot = Math.random() * 360;
+  });
+  function loop() {
+    if (drawPhase !== 'floating') return;
+    cardObjs.forEach(card => {
+      card.vx += (Math.random()-0.5) * 0.7;
+      card.vy += (Math.random()-0.5) * 0.7;
+      const spd = Math.hypot(card.vx, card.vy);
+      const max = 7;
+      if (spd > max) { card.vx *= max/spd; card.vy *= max/spd; }
+      card.x += card.vx; card.y += card.vy;
+      const { maxX, maxY } = getBounds(card);
+      if (card.x < 0)    { card.x = 0;    card.vx =  Math.abs(card.vx); }
+      if (card.x > maxX) { card.x = maxX; card.vx = -Math.abs(card.vx); }
+      if (card.y < 0)    { card.y = 0;    card.vy =  Math.abs(card.vy); }
+      if (card.y > maxY) { card.y = maxY; card.vy = -Math.abs(card.vy); }
+      card.rot += card.vx * 1.3;
+      card.el.style.left      = card.x + 'px';
+      card.el.style.top       = card.y + 'px';
+      card.el.style.transform = `rotate(${card.rot}deg)`;
+    });
+    animId = requestAnimationFrame(loop);
+  }
+  animId = requestAnimationFrame(loop);
+}
+
+/* ─────────────────────────────────────────
+   SETTLE TO SLOTS
+   ───────────────────────────────────────── */
+function settleAllCards() {
+  drawPhase = 'settling';
+  stopAnim(); stopBgMusic();
+  playFanfare();
+
+  const pa     = document.getElementById('play-area');
+  const paRect = pa.getBoundingClientRect();
+
+  // Stagger each card settling
+  cardObjs.forEach((card, idx) => {
+    const slot   = slotEls[card.assignment - 1];
+    const sr     = slot.getBoundingClientRect();
+    const cw     = card.el.offsetWidth  || 100;
+    const ch     = card.el.offsetHeight || 38;
+    const tx     = sr.left - paRect.left + sr.width  / 2 - cw / 2;
+    const ty     = sr.top  - paRect.top  + sr.height / 2 - ch / 2;
+    const dur    = 0.75 + idx * 0.05;
+
+    card.el.style.transition = `left ${dur}s cubic-bezier(0.34,1.56,0.64,1),`
+                              + `top ${dur}s cubic-bezier(0.34,1.56,0.64,1),`
+                              + `transform 0.4s ease, opacity 0.4s ease`;
+    card.el.style.left      = tx + 'px';
+    card.el.style.top       = ty + 'px';
+    card.el.style.transform = 'rotate(0deg) scale(0.85)';
+
+    const landMs = (dur * 1000) + idx * 40;
+    setTimeout(() => {
+      playCheer();
+      card.el.style.opacity = '0';
+      document.getElementById('sn' + card.assignment).textContent = card.name;
+      slot.classList.add('filled');
+      setTimeout(() => { if (card.el.parentNode) card.el.remove(); }, 400);
+    }, landMs);
+  });
+
+  spawnConfetti();
+
+  const maxLand = (0.75 + (cardObjs.length-1) * 0.05) * 1000 + (cardObjs.length-1) * 40 + 600;
+  setTimeout(() => {
+    drawPhase = 'done';
+    document.getElementById('result-msg').style.display = 'block';
+    const btn = document.getElementById('startBtn');
+    btn.disabled = false;
+    btn.textContent = '🔄 다시하기';
+  }, maxLand);
+}
+
+/* ─────────────────────────────────────────
+   CONFETTI
+   ───────────────────────────────────────── */
+const CONFETTI_COLORS = ['#ffd700','#ff6b6b','#48dbfb','#ff9ff3','#55efc4','#a29bfe','#feca57','#fd79a8','#7bed9f','#eccc68'];
+
+function spawnConfetti() {
+  for (let i = 0; i < 140; i++) {
+    setTimeout(() => {
+      const p   = document.createElement('div');
+      p.className = 'cp';
+      const sz  = 6 + Math.random() * 11;
+      const rs  = (Math.random() * 180).toFixed(0) + 'deg';
+      const re  = ((Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 720)).toFixed(0) + 'deg';
+      const dur = (2.2 + Math.random() * 3).toFixed(2) + 's';
+      p.style.cssText = `
+        left:${(5+Math.random()*90).toFixed(1)}vw;
+        top:-22px;
+        width:${sz.toFixed(1)}px;
+        height:${(sz*(0.5+Math.random()*1.2)).toFixed(1)}px;
+        background:${CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)]};
+        border-radius:${Math.random()>0.45?'50%':'3px'};
+        --rs:${rs};--re:${re};
+        animation:cpFall ${dur} ${(Math.random()*0.6).toFixed(2)}s linear forwards;
+      `;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 6500);
+    }, i * 22);
+  }
+}
+
+/* ─────────────────────────────────────────
+   DRAW LOGIC
+   ───────────────────────────────────────── */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function assignNumbers() {
+  const nums = shuffle([...Array(participants.length)].map((_,i) => i+1));
+  cardObjs.forEach((c, i) => c.assignment = nums[i]);
+}
+
+function runCountdown() {
+  timeLeft = 10;
+  const timerEl = document.getElementById('timer');
+  timerEl.textContent = timeLeft;
+  timerEl.style.color = '#ffd700';
+
+  cntId = setInterval(() => {
+    timeLeft--;
+    timerEl.classList.remove('beat');
+    void timerEl.offsetWidth; // force reflow for re-trigger
+    timerEl.textContent = timeLeft > 0 ? timeLeft : '🎉';
+    timerEl.style.color = timeLeft <= 3 ? '#ff6b6b' : '#ffd700';
+    timerEl.classList.add('beat');
+    playTick(timeLeft);
+    if (timeLeft <= 0) {
+      clearInterval(cntId); cntId = null;
+      settleAllCards();
+    }
+  }, 1000);
+}
+
+function handleStartBtn() {
+  if (drawPhase === 'done') { resetAll(); return; }
+  if (drawPhase !== 'idle') return;
+
+  document.getElementById('startBtn').disabled    = true;
+  document.getElementById('startBtn').textContent = '🎊 진행중...';
+  document.getElementById('result-msg').style.display = 'none';
+
+  ac().resume(); // unlock AudioContext on user gesture
+  playWhoosh();
+  stopAnim();
+  assignNumbers();
+  beginChaosFloat();
+  startBgMusic();
+  runCountdown();
+}
+
+function resetAll() {
+  stopAnim(); stopBgMusic();
+  if (cntId) { clearInterval(cntId); cntId = null; }
+  document.querySelectorAll('.name-card, .cp').forEach(e => e.remove());
+  slotEls.forEach((slot, i) => {
+    slot.classList.remove('filled');
+    document.getElementById('sn' + (i+1)).textContent = '';
+  });
+  const timerEl = document.getElementById('timer');
+  timerEl.textContent = '🎁';
+  timerEl.style.color  = '#ffd700';
+  timerEl.classList.remove('beat');
+  document.getElementById('result-msg').style.display = 'none';
+  const btn = document.getElementById('startBtn');
+  btn.disabled = false; btn.textContent = '🎊 뽑기시작';
+  buildCards();
+  beginIdleFloat();
+}
+
+/* ─────────────────────────────────────────
+   INIT
+   ───────────────────────────────────────── */
+buildStars();
+</script>
+</body>
+</html>
