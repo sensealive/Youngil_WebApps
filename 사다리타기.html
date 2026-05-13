@@ -551,6 +551,8 @@ h1 {
   let margin = { l: 48, r: 48, t: 72, b: 100 };
   let arranged = false;
   let running = false;
+  /** names[i]가 올라가는 출발 세로줄 인덱스 (0 .. n-1), 이름 배치 시마다 섞음 */
+  let startColByName = null;
 
   function setHint(t) {
     hintEl.textContent = t || '';
@@ -758,6 +760,7 @@ h1 {
     btnArrange.disabled = true;
     btnStart.disabled = true;
     arranged = false;
+    startColByName = null;
     ladderSvg.innerHTML = '';
     tokenLayer.innerHTML = '';
     setHint('이름을 적고 「사다리 생성」을 눌러 주세요.');
@@ -770,6 +773,22 @@ h1 {
       const v = inp.value.trim() || '플레이어' + (i + 1);
       names.push(v);
     });
+  }
+
+  /** 각 이름을 0..n-1 출발 칸에 무작위로 한 번씩 배치 */
+  function shuffleStartColumns() {
+    const order = [];
+    for (let i = 0; i < n; i++) order.push(i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = order[i];
+      order[i] = order[j];
+      order[j] = t;
+    }
+    startColByName = new Array(n);
+    for (let col = 0; col < n; col++) {
+      startColByName[order[col]] = col;
+    }
   }
 
   function buildBridges(numCols, rows) {
@@ -1027,6 +1046,7 @@ h1 {
     }
 
     arranged = false;
+    startColByName = null;
     btnArrange.disabled = false;
     btnStart.disabled = true;
     tokenLayer.innerHTML = '';
@@ -1069,15 +1089,16 @@ h1 {
     ensureAudio();
     if (musicOn) startMusic();
     readNames();
+    shuffleStartColumns();
     arranged = true;
     btnStart.disabled = false;
 
     createFloatingBubbles();
-    const startPts = names.map((_, i) => pathPolylines[i].points[0]);
 
     tokenLayer.querySelectorAll('.name-bubble').forEach((b) => {
-      const idx = parseInt(b.dataset.idx, 10);
-      const pt = startPts[idx];
+      const nameIdx = parseInt(b.dataset.idx, 10);
+      const col = startColByName[nameIdx];
+      const pt = pathPolylines[col].points[0];
       const px = stageToLayerPx(pt);
       requestAnimationFrame(() => {
         b.classList.remove('floating');
@@ -1087,11 +1108,11 @@ h1 {
       });
     });
 
-    setHint('출발선 OK! 「시작!」을 누르면 5초 레이스~');
+    setHint('출발 위치 랜덤 배치 완료! 「시작!」을 누르면 5초 레이스~');
   });
 
   btnStart.addEventListener('click', () => {
-    if (!arranged || running || !pathPolylines.length) return;
+    if (!arranged || running || !pathPolylines.length || !startColByName || startColByName.length !== n) return;
     running = true;
     btnStart.disabled = true;
     btnArrange.disabled = true;
@@ -1104,7 +1125,8 @@ h1 {
     tokenLayer.innerHTML = '';
     const duration = 5000;
     const movers = names.map((name, i) => {
-      const { points, endCol } = pathPolylines[i];
+      const col = startColByName[i];
+      const { points, endCol } = pathPolylines[col];
       const totalLen = lengthAlong(points);
       const isLose = bottomLabels[endCol];
       const el = document.createElement('div');
