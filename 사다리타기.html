@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>신나는 사다리타기</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg1: #1a0a2e;
+  --bg2: #2d1b4e;
+  --accent: #ff6b9d;
+  --accent2: #ffd93d;
+  --mint: #6ee7b7;
+  --card: rgba(255,255,255,0.08);
+  --stroke: rgba(255,255,255,0.15);
+}
+
+body {
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255,107,157,0.35), transparent 50%),
+    radial-gradient(ellipse 80% 60% at 100% 60%, rgba(110,231,183,0.2), transparent 45%),
+    linear-gradient(165deg, var(--bg1), var(--bg2) 50%, #16213e);
+  color: #fff;
+  overflow-x: hidden;
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* 장난스러운 뿌요뿌요 느낌 배경 도트 */
+#dots {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
+  background-image: radial-gradient(circle, #fff 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+h1 {
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #ff9ecd, #ffe566, #7fffd4, #ff9ecd);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: hueShift 5s linear infinite;
+}
+@keyframes hueShift {
+  0% { background-position: 0% center; }
+  100% { background-position: 300% center; }
+}
+
+#setup-card {
+  max-width: 520px;
+  margin: 0 auto 16px;
+  padding: 18px 16px 20px;
+  background: var(--card);
+  border: 2px dashed var(--stroke);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  position: relative;
+  z-index: 2;
+}
+
+.setup-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 130px;
+}
+.field label {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.7);
+  font-weight: 700;
+}
+.field input {
+  border: 2px solid rgba(255,217,61,0.45);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  background: rgba(0,0,0,0.25);
+  color: #fff;
+  width: 100%;
+}
+
+.btn {
+  font-family: inherit;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+}
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: linear-gradient(180deg, #ff8cc8, #ff4d8d);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+.btn-secondary {
+  background: linear-gradient(180deg, #a78bfa, #6c5ce7);
+  color: #fff;
+}
+.btn-go {
+  background: linear-gradient(180deg, #7ef29b, #2ecc71);
+  color: #0d2818;
+}
+
+#name-fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.name-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.name-slot span {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent2);
+  color: #333;
+  font-weight: 900;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.name-slot input {
+  flex: 1;
+  border: 2px solid rgba(110,231,183,0.5);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: rgba(0,0,0,0.22);
+  color: #fff;
+}
+
+#game-wrap {
+  max-width: min(96vw, 680px);
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+#ladder-stage {
+  position: relative;
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.1);
+  padding: 12px 8px 8px;
+  min-height: 280px;
+}
+
+#ladder-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
+
+#token-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+#go-shout {
+  position: absolute;
+  left: 50%;
+  top: min(12%, 52px);
+  z-index: 14;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: clamp(1.6rem, 8vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.4);
+  text-shadow:
+    0 0 20px rgba(255,220,120,0.95),
+    0 0 40px rgba(255,107,157,0.7),
+    0 4px 0 #b84410,
+    0 8px 24px rgba(0,0,0,0.45);
+  background: linear-gradient(180deg, #fffef0 0%, #ffe566 40%, #ff9e4a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+}
+#go-shout.show {
+  animation: goShoutIn 1.35s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+}
+@keyframes goShoutIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.25) rotate(-10deg);
+    filter: drop-shadow(0 0 0 transparent) blur(4px);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12) rotate(4deg);
+    filter: drop-shadow(0 6px 20px rgba(255,200,80,0.9)) blur(0);
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(1.06) translateY(-6px);
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60%) scale(1.15);
+    filter: drop-shadow(0 0 30px rgba(255,200,0,0.4)) blur(2px);
+  }
+}
+
+.slot-dyn { animation: slotDynWiggle 0.42s ease-in-out infinite; transform-origin: 0 4px; }
+@keyframes slotDynWiggle {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+.slot-flame {
+  animation: flamePulse 0.14s ease-in-out infinite alternate;
+}
+@keyframes flamePulse {
+  from { opacity: 0.75; }
+  to { opacity: 1; }
+}
+
+/* 떠다니는 이름 (배치 전) */
+.name-bubble {
+  position: absolute;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: clamp(0.75rem, 3vw, 0.95rem);
+  white-space: nowrap;
+  background: linear-gradient(180deg, #fff8e7, #ffd5e5);
+  color: #4a1942;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25), 0 0 0 3px rgba(255,255,255,0.25);
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  transition: left 0.1s linear, top 0.1s linear;
+}
+.name-bubble.floating {
+  animation: bob 2.2s ease-in-out infinite;
+}
+@keyframes bob {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0) rotate(-2deg); }
+  50% { transform: translate(-50%, -50%) translateY(-10px) rotate(2deg); }
+}
+.name-bubble.arranging {
+  animation: none;
+  transition: left 1.2s cubic-bezier(0.34, 1.2, 0.64, 1), top 1.2s cubic-bezier(0.34, 1.2, 0.64, 1), transform 1.2s;
+}
+
+/* 이동 중 토큰: 모두 천사 (꽝은 도착 후 연출만) */
+.token {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  font-size: clamp(0.7rem, 2.8vw, 0.88rem);
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.token .label {
+  background: rgba(255,255,255,0.92);
+  color: #222;
+  padding: 2px 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.token.angel .face-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  animation: angelBob 1.4s ease-in-out infinite;
+}
+@keyframes angelBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.token.angel .halo {
+  width: 34px;
+  height: 14px;
+  border: 4px solid #ffe566;
+  border-radius: 50%;
+  margin-bottom: -8px;
+  box-shadow: 0 0 12px rgba(255,229,100,0.8);
+  animation: haloGlow 1s ease-in-out infinite alternate;
+}
+@keyframes haloGlow {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.25); }
+}
+.token.angel .face {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffeef5, #ffc8dc);
+  border: 3px solid #fff;
+  box-shadow: inset 0 -6px 0 rgba(255,105,180,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+.token.angel .cheeks::before,
+.token.angel .cheeks::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 6px;
+  background: #ff9eb5;
+  border-radius: 50%;
+  top: 50%;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+.token.angel .cheeks::before { left: 4px; }
+.token.angel .cheeks::after { right: 4px; }
+
+.token.landed-bad .label {
+  background: linear-gradient(180deg, #fff0f0, #ffc9c9);
+  color: #6b1515;
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(255,90,90,0.65), 0 2px 6px rgba(0,0,0,0.2);
+  animation: badLabelPulse 0.55s ease-in-out infinite;
+}
+@keyframes badLabelPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.explosion {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 20;
+  background: radial-gradient(circle, #fff 0%, #ffec6a 25%, #ff6b00 55%, transparent 70%);
+  animation: boom 0.55s ease-out forwards;
+}
+@keyframes boom {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.2); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+
+#hint {
+  text-align: center;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.55);
+  margin-top: 10px;
+  min-height: 1.2em;
+}
+
+@media (max-width: 380px) {
+  .setup-row { flex-direction: column; align-items: stretch; }
+  .field { min-width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="dots" aria-hidden="true"></div>
+
+<header>
+  <h1>신나는 사다리타기</h1>
+</header>
+
+<div id="setup-card">
+  <div class="setup-row">
+    <div class="field">
+      <label for="numP">참여자 수</label>
+      <input type="number" id="numP" min="2" max="12" value="4">
+    </div>
+    <div class="field">
+      <label for="numLose">꽝 개수</label>
+      <input type="number" id="numLose" min="1" max="11" value="1">
+    </div>
+    <button type="button" class="btn btn-primary" id="btnApply">이 숫자로 준비!</button>
+  </div>
+  <div id="name-fields"></div>
+  <p id="hint"></p>
+</div>
+
+<div id="game-wrap">
+  <div id="toolbar">
+    <button type="button" class="btn btn-secondary" id="btnBuild" disabled>사다리 생성</button>
+    <button type="button" class="btn btn-primary" id="btnArrange" disabled>이름 배치</button>
+    <button type="button" class="btn btn-go" id="btnStart" disabled>시작!</button>
+    <button type="button" class="btn btn-secondary" id="btnMusic" title="배경음 on/off">🎵 음악</button>
+  </div>
+  <div id="ladder-stage">
+    <div id="go-shout" aria-hidden="true">출발~!</div>
+    <svg id="ladder-svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet" aria-label="사다리">
+      <!-- JS draws -->
+    </svg>
+    <div id="token-layer"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const numPInput = document.getElementById('numP');
+  const numLoseInput = document.getElementById('numLose');
+  const btnApply = document.getElementById('btnApply');
+  const nameFields = document.getElementById('name-fields');
+  const btnBuild = document.getElementById('btnBuild');
+  const btnArrange = document.getElementById('btnArrange');
+  const btnStart = document.getElementById('btnStart');
+  const btnMusic = document.getElementById('btnMusic');
+  const ladderSvg = document.getElementById('ladder-svg');
+  const tokenLayer = document.getElementById('token-layer');
+  const hintEl = document.getElementById('hint');
+  const ladderStage = document.getElementById('ladder-stage');
+
+  let audioCtx = null;
+  let musicOn = true;
+  let musicNodes = null;
+  let n = 4;
+  let numLose = 1;
+  let names = [];
+  let bridges = [];
+  let rungRows = 0;
+  let bottomLabels = [];
+  let pathPolylines = [];
+  let svgRect = { w: 400, h: 480 };
+  let margin = { l: 48, r: 48, t: 72, b: 100 };
+  let arranged = false;
+  let running = false;
+
+  function setHint(t) {
+    hintEl.textContent = t || '';
+  }
+
+  function showGoShout() {
+    const el = document.getElementById('go-shout');
+    if (!el) return;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(() => { el.classList.remove('show'); }, 1400);
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone(freq, dur, type, vol, when) {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const t0 = when ?? ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(vol * 0.25, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start(t0);
+    o.stop(t0 + dur + 0.05);
+  }
+
+  function playMoveBlip(i, prog) {
+    const ctx = ensureAudio();
+    if (!ctx || !musicOn) return;
+    const base = 420 + i * 55 + (prog % 3) * 30;
+    playTone(base, 0.06, 'square', 0.35, ctx.currentTime);
+  }
+
+  function playExplosion() {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    const len = 0.45;
+    const bufferSize = ctx.sampleRate * len;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const e = 1 - i / bufferSize;
+      data[i] = (Math.random() * 2 - 1) * e * e;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, t0);
+    filter.frequency.exponentialRampToValueAtTime(100, t0 + len);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.5, t0);
+    g.gain.exponentialRampToValueAtTime(0.01, t0 + len);
+    noise.connect(filter);
+    filter.connect(g);
+    g.connect(ctx.destination);
+    noise.start(t0);
+    noise.stop(t0 + len);
+
+    playTone(120, 0.15, 'sawtooth', 0.6, t0);
+    playTone(80, 0.2, 'square', 0.4, t0 + 0.05);
+  }
+
+  function playKick(ctx, bus, t0) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(210, t0);
+    o.frequency.exponentialRampToValueAtTime(42, t0 + 0.1);
+    g.gain.setValueAtTime(0.52, t0);
+    g.gain.exponentialRampToValueAtTime(0.01, t0 + 0.17);
+    o.connect(g);
+    g.connect(bus);
+    o.start(t0);
+    o.stop(t0 + 0.19);
+  }
+
+  function playHiHat(ctx, bus, t0) {
+    const len = 0.038;
+    const n = Math.max(1, Math.floor(ctx.sampleRate * len));
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) {
+      d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'highpass';
+    f.frequency.value = 6500;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.11, t0);
+    g.gain.exponentialRampToValueAtTime(0.01, t0 + len);
+    src.connect(f);
+    f.connect(g);
+    g.connect(bus);
+    src.start(t0);
+    src.stop(t0 + len);
+  }
+
+  function stopMusic() {
+    if (!musicNodes) return;
+    clearInterval(musicNodes.interval);
+    musicNodes.oscs.forEach((o) => {
+      try {
+        o.stop();
+        o.disconnect();
+      } catch (e) {}
+    });
+    try {
+      musicNodes.master.disconnect();
+    } catch (e) {}
+    musicNodes = null;
+  }
+
+  function startMusic() {
+    const ctx = ensureAudio();
+    if (!ctx || !musicOn) return;
+    stopMusic();
+
+    const master = ctx.createGain();
+    master.gain.value = 0.12;
+    master.connect(ctx.destination);
+
+    const mel = ctx.createOscillator();
+    const bass = ctx.createOscillator();
+    mel.type = 'square';
+    bass.type = 'sawtooth';
+    const gMel = ctx.createGain();
+    const gBass = ctx.createGain();
+    gMel.gain.value = 0.052;
+    gBass.gain.value = 0.068;
+    mel.connect(gMel);
+    bass.connect(gBass);
+    gMel.connect(master);
+    gBass.connect(master);
+    mel.start(0);
+    bass.start(0);
+
+    const melody = [
+      523.25, 659.25, 783.99, 659.25,
+      698.46, 880, 1046.5, 987.77,
+      783.99, 659.25, 523.25, 587.33,
+      622.25, 783.99, 932.33, 1174.66
+    ];
+    const bassLine = [
+      98, 98, 123, 123,
+      110, 110, 131, 123,
+      98, 110, 87, 98,
+      110, 123, 98, 82.41
+    ];
+
+    let step = 0;
+    const stepMs = 92;
+
+    const tick = () => {
+      if (!musicNodes) return;
+      const t = ctx.currentTime;
+      const i = step % 16;
+      mel.frequency.setValueAtTime(melody[i], t);
+      bass.frequency.setValueAtTime(bassLine[i], t);
+      if (i % 4 === 0) playKick(ctx, master, t);
+      if (i % 4 === 2) playHiHat(ctx, master, t);
+      step++;
+    };
+
+    tick();
+    const interval = setInterval(tick, stepMs);
+    musicNodes = { interval, master, oscs: [mel, bass] };
+  }
+
+  function validateNumbers() {
+    n = Math.max(2, Math.min(12, parseInt(numPInput.value, 10) || 2));
+    numLose = Math.max(1, Math.min(n - 1, parseInt(numLoseInput.value, 10) || 1));
+    numPInput.value = n;
+    numLoseInput.max = Math.max(1, n - 1);
+    numLoseInput.value = numLose;
+  }
+
+  function renderNameInputs() {
+    nameFields.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const row = document.createElement('div');
+      row.className = 'name-slot';
+      row.innerHTML = '<span>' + (i + 1) + '</span><input type="text" maxlength="8" placeholder="이름 ' + (i + 1) + '" data-idx="' + i + '">';
+      nameFields.appendChild(row);
+    }
+    btnBuild.disabled = false;
+    btnArrange.disabled = true;
+    btnStart.disabled = true;
+    arranged = false;
+    ladderSvg.innerHTML = '';
+    tokenLayer.innerHTML = '';
+    setHint('이름을 적고 「사다리 생성」을 눌러 주세요.');
+  }
+
+  function readNames() {
+    const inputs = nameFields.querySelectorAll('input[data-idx]');
+    names = [];
+    inputs.forEach((inp, i) => {
+      const v = inp.value.trim() || '플레이어' + (i + 1);
+      names.push(v);
+    });
+  }
+
+  function buildBridges(numCols, rows) {
+    const b = [];
+    for (let r = 0; r < rows; r++) {
+      const row = new Array(numCols - 1).fill(false);
+      let i = 0;
+      while (i < numCols - 1) {
+        if (Math.random() < 0.45) {
+          row[i] = true;
+          i += 2;
+        } else {
+          i += 1;
+        }
+      }
+      b.push(row);
+    }
+    return b;
+  }
+
+  function columnX(i) {
+    const w = svgRect.w - margin.l - margin.r;
+    return margin.l + (w * i) / Math.max(1, n - 1);
+  }
+
+  function rowY(r) {
+    const h = svgRect.h - margin.t - margin.b;
+    if (rungRows <= 0) return margin.t;
+    return margin.t + (h * (r + 1)) / (rungRows + 1);
+  }
+
+  function bottomY() {
+    return svgRect.h - margin.b + 18;
+  }
+
+  function topY() {
+    return margin.t - 28;
+  }
+
+  function polylineForStart(startCol) {
+    const pts = [];
+    let c = startCol;
+    pts.push({ x: columnX(c), y: topY() });
+    for (let r = 0; r < rungRows; r++) {
+      const y = rowY(r);
+      const row = bridges[r];
+      if (c > 0 && row[c - 1]) {
+        pts.push({ x: columnX(c), y });
+        c--;
+        pts.push({ x: columnX(c), y });
+      } else if (c < n - 1 && row[c]) {
+        pts.push({ x: columnX(c), y });
+        c++;
+        pts.push({ x: columnX(c), y });
+      } else {
+        pts.push({ x: columnX(c), y });
+      }
+    }
+    pts.push({ x: columnX(c), y: bottomY() });
+    return { points: pts, endCol: c };
+  }
+
+  function lengthAlong(points) {
+    let L = 0;
+    for (let i = 1; i < points.length; i++) {
+      const dx = points[i].x - points[i - 1].x;
+      const dy = points[i].y - points[i - 1].y;
+      L += Math.hypot(dx, dy);
+    }
+    return L;
+  }
+
+  function pointAtDist(points, dist) {
+    if (dist <= 0) return { ...points[0] };
+    let left = dist;
+    for (let i = 1; i < points.length; i++) {
+      const dx = points[i].x - points[i - 1].x;
+      const dy = points[i].y - points[i - 1].y;
+      const seg = Math.hypot(dx, dy);
+      if (left <= seg) {
+        const t = seg ? left / seg : 0;
+        return {
+          x: points[i - 1].x + dx * t,
+          y: points[i - 1].y + dy * t
+        };
+      }
+      left -= seg;
+    }
+    return { ...points[points.length - 1] };
+  }
+
+  function drawLadder() {
+    ladderSvg.innerHTML = '';
+    const ns = 'http://www.w3.org/2000/svg';
+
+    const defs = document.createElementNS(ns, 'defs');
+    const lg = document.createElementNS(ns, 'linearGradient');
+    lg.setAttribute('id', 'dynSlotGrad');
+    lg.setAttribute('x1', '0');
+    lg.setAttribute('y1', '0');
+    lg.setAttribute('x2', '1');
+    lg.setAttribute('y2', '1');
+    const stop1 = document.createElementNS(ns, 'stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', '#5c5c5c');
+    const stop2 = document.createElementNS(ns, 'stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', '#0d0d0d');
+    lg.appendChild(stop1);
+    lg.appendChild(stop2);
+    defs.appendChild(lg);
+    ladderSvg.appendChild(defs);
+
+    const bg = document.createElementNS(ns, 'rect');
+    bg.setAttribute('width', '100%');
+    bg.setAttribute('height', '100%');
+    bg.setAttribute('fill', 'rgba(0,0,0,0.15)');
+    bg.setAttribute('rx', '12');
+    ladderSvg.appendChild(bg);
+
+    const gLines = document.createElementNS(ns, 'g');
+    gLines.setAttribute('stroke', 'rgba(255,255,255,0.88)');
+    gLines.setAttribute('stroke-width', '4');
+    gLines.setAttribute('stroke-linecap', 'round');
+    for (let i = 0; i < n; i++) {
+      const x = columnX(i);
+      const line = document.createElementNS(ns, 'line');
+      line.setAttribute('x1', x);
+      line.setAttribute('y1', margin.t);
+      line.setAttribute('x2', x);
+      line.setAttribute('y2', svgRect.h - margin.b);
+      gLines.appendChild(line);
+    }
+    ladderSvg.appendChild(gLines);
+
+    const gRungs = document.createElementNS(ns, 'g');
+    gRungs.setAttribute('stroke', '#ffd93d');
+    gRungs.setAttribute('stroke-width', '5');
+    gRungs.setAttribute('stroke-linecap', 'round');
+    for (let r = 0; r < rungRows; r++) {
+      const y = rowY(r);
+      const row = bridges[r];
+      for (let i = 0; i < n - 1; i++) {
+        if (row[i]) {
+          const line = document.createElementNS(ns, 'line');
+          line.setAttribute('x1', columnX(i));
+          line.setAttribute('y1', y);
+          line.setAttribute('x2', columnX(i + 1));
+          line.setAttribute('y2', y);
+          gRungs.appendChild(line);
+        }
+      }
+    }
+    ladderSvg.appendChild(gRungs);
+
+    const gBot = document.createElementNS(ns, 'g');
+    for (let i = 0; i < n; i++) {
+      const x = columnX(i);
+      const isLose = bottomLabels[i];
+
+      if (isLose) {
+        const dg = document.createElementNS(ns, 'g');
+        dg.setAttribute('transform', 'translate(' + x + ',' + (svgRect.h - margin.b + 4) + ')');
+        const inner = document.createElementNS(ns, 'g');
+        inner.setAttribute('class', 'slot-dyn');
+        const stick = document.createElementNS(ns, 'rect');
+        stick.setAttribute('x', -1.5);
+        stick.setAttribute('y', -14);
+        stick.setAttribute('width', 3);
+        stick.setAttribute('height', 8);
+        stick.setAttribute('rx', 1);
+        stick.setAttribute('fill', '#6b4423');
+        const body = document.createElementNS(ns, 'rect');
+        body.setAttribute('x', -9);
+        body.setAttribute('y', -6);
+        body.setAttribute('width', 18);
+        body.setAttribute('height', 20);
+        body.setAttribute('rx', 3);
+        body.setAttribute('fill', 'url(#dynSlotGrad)');
+        body.setAttribute('stroke', '#222');
+        body.setAttribute('stroke-width', '1');
+        const fuse = document.createElementNS(ns, 'rect');
+        fuse.setAttribute('x', 4);
+        fuse.setAttribute('y', -16);
+        fuse.setAttribute('width', 2);
+        fuse.setAttribute('height', 7);
+        fuse.setAttribute('fill', '#444');
+        const flame = document.createElementNS(ns, 'circle');
+        flame.setAttribute('cx', 5);
+        flame.setAttribute('cy', -18);
+        flame.setAttribute('r', 4);
+        flame.setAttribute('fill', '#ff6b00');
+        flame.setAttribute('class', 'slot-flame');
+        inner.appendChild(stick);
+        inner.appendChild(body);
+        inner.appendChild(fuse);
+        inner.appendChild(flame);
+        dg.appendChild(inner);
+        gBot.appendChild(dg);
+      }
+
+      const t = document.createElementNS(ns, 'text');
+      t.setAttribute('x', x);
+      t.setAttribute('y', svgRect.h - margin.b + 42);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('fill', isLose ? '#ff6b6b' : '#6ee7b7');
+      t.setAttribute('font-size', '15');
+      t.setAttribute('font-weight', '800');
+      t.textContent = isLose ? '꽝!' : '안전♡';
+      const r = document.createElementNS(ns, 'rect');
+      const w = isLose ? 52 : 58;
+      r.setAttribute('x', x - w / 2);
+      r.setAttribute('y', svgRect.h - margin.b + 22);
+      r.setAttribute('width', w);
+      r.setAttribute('height', '28');
+      r.setAttribute('rx', '10');
+      r.setAttribute('fill', isLose ? 'rgba(255,80,80,0.25)' : 'rgba(110,231,183,0.22)');
+      r.setAttribute('stroke', isLose ? 'rgba(255,120,120,0.7)' : 'rgba(160,250,200,0.6)');
+      gBot.appendChild(r);
+      gBot.appendChild(t);
+    }
+    ladderSvg.appendChild(gBot);
+  }
+
+  btnApply.addEventListener('click', () => {
+    validateNumbers();
+    renderNameInputs();
+  });
+
+  btnBuild.addEventListener('click', () => {
+    validateNumbers();
+    readNames();
+    rungRows = Math.max(6, n * 2 + 2);
+    bridges = buildBridges(n, rungRows);
+
+    const loseCols = new Set();
+    const idxs = [];
+    for (let i = 0; i < n; i++) idxs.push(i);
+    for (let i = idxs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = idxs[i];
+      idxs[i] = idxs[j];
+      idxs[j] = tmp;
+    }
+    for (let k = 0; k < numLose; k++) { loseCols.add(idxs[k]); }
+
+    bottomLabels = [];
+    for (let c = 0; c < n; c++) {
+      bottomLabels.push(loseCols.has(c));
+    }
+
+    pathPolylines = [];
+    for (let s = 0; s < n; s++) {
+      pathPolylines.push(polylineForStart(s));
+    }
+
+    arranged = false;
+    btnArrange.disabled = false;
+    btnStart.disabled = true;
+    tokenLayer.innerHTML = '';
+    drawLadder();
+    setHint('이제 「이름 배치」로 출발선에 붙여 주세요!');
+  });
+
+  function stageToLayerPx(pt) {
+    const vb = ladderSvg.viewBox.baseVal;
+    const stageW = ladderStage.clientWidth;
+    const stageH = ladderStage.clientHeight;
+    const scale = Math.min(stageW / vb.width, stageH / vb.height);
+    const drawW = vb.width * scale;
+    const drawH = vb.height * scale;
+    const offX = (stageW - drawW) / 2;
+    const offY = (stageH - drawH) / 2;
+    return {
+      x: offX + (pt.x / vb.width) * drawW,
+      y: offY + (pt.y / vb.height) * drawH
+    };
+  }
+
+  function createFloatingBubbles() {
+    tokenLayer.innerHTML = '';
+    names.forEach((name, i) => {
+      const b = document.createElement('div');
+      b.className = 'name-bubble floating';
+      b.textContent = name;
+      const rx = 25 + Math.random() * 45;
+      const ry = 25 + Math.random() * 35;
+      b.style.left = rx + '%';
+      b.style.top = ry + '%';
+      b.dataset.idx = String(i);
+      tokenLayer.appendChild(b);
+    });
+  }
+
+  btnArrange.addEventListener('click', () => {
+    if (!pathPolylines.length) return;
+    ensureAudio();
+    if (musicOn) startMusic();
+    readNames();
+    arranged = true;
+    btnStart.disabled = false;
+
+    createFloatingBubbles();
+    const startPts = names.map((_, i) => pathPolylines[i].points[0]);
+
+    tokenLayer.querySelectorAll('.name-bubble').forEach((b) => {
+      const idx = parseInt(b.dataset.idx, 10);
+      const pt = startPts[idx];
+      const px = stageToLayerPx(pt);
+      requestAnimationFrame(() => {
+        b.classList.remove('floating');
+        b.classList.add('arranging');
+        b.style.left = px.x + 'px';
+        b.style.top = px.y + 'px';
+      });
+    });
+
+    setHint('출발선 OK! 「시작!」을 누르면 5초 레이스~');
+  });
+
+  btnStart.addEventListener('click', () => {
+    if (!arranged || running || !pathPolylines.length) return;
+    running = true;
+    btnStart.disabled = true;
+    btnArrange.disabled = true;
+    btnBuild.disabled = true;
+    ensureAudio();
+    if (musicOn) startMusic();
+
+    showGoShout();
+
+    tokenLayer.innerHTML = '';
+    const duration = 5000;
+    const movers = names.map((name, i) => {
+      const { points, endCol } = pathPolylines[i];
+      const totalLen = lengthAlong(points);
+      const isLose = bottomLabels[endCol];
+      const el = document.createElement('div');
+      el.className = 'token angel';
+      el.innerHTML =
+        '<div class="face-wrap"><div class="halo"></div><div class="face cheeks">😊</div></div>' +
+        '<span class="label">' + name + '</span>';
+
+      const p0 = pointAtDist(points, 0);
+      const pos = stageToLayerPx(p0);
+      el.style.left = pos.x + 'px';
+      el.style.top = pos.y + 'px';
+      tokenLayer.appendChild(el);
+
+      let lastBlip = -1;
+      return { el, points, totalLen, endCol, isLose, name, lastBlip };
+    });
+
+    const startT = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startT;
+      const t = Math.min(1, elapsed / duration);
+
+      movers.forEach((m, idx) => {
+        const eased = t;
+        const dist = eased * m.totalLen;
+        const p = pointAtDist(m.points, dist);
+        const pos = stageToLayerPx(p);
+        m.el.style.left = pos.x + 'px';
+        m.el.style.top = pos.y + 'px';
+
+        const step = Math.floor(dist / 40);
+        if (step !== m.lastBlip) {
+          m.lastBlip = step;
+          playMoveBlip(idx, step);
+        }
+
+        if (t >= 1 && m.isLose && !m.boomed) {
+          m.boomed = true;
+          playExplosion();
+          m.el.classList.add('landed-bad');
+          const boom = document.createElement('div');
+          boom.className = 'explosion';
+          boom.style.left = pos.x + 'px';
+          boom.style.top = pos.y + 'px';
+          tokenLayer.appendChild(boom);
+          setTimeout(() => { try { boom.remove(); } catch (e) {} }, 600);
+        }
+      });
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        running = false;
+        btnBuild.disabled = false;
+        btnArrange.disabled = false;
+        setHint('끝! 이름은 그대로~ 꽝 칸만 펑!');
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+
+  btnMusic.addEventListener('click', () => {
+    musicOn = !musicOn;
+    btnMusic.textContent = musicOn ? '🎵 음악' : '🔇 음악 끔';
+    if (musicOn) {
+      ensureAudio();
+      startMusic();
+    } else {
+      stopMusic();
+    }
+  });
+
+  document.body.addEventListener('click', () => {
+    ensureAudio();
+  }, { once: true });
+
+  validateNumbers();
+  renderNameInputs();
+})();
+</script>
+</body>
+</html>
