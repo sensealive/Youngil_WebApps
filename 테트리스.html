@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>고전 테트리스</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0d1117;
+  --panel: rgba(22,27,34,0.92);
+  --border: rgba(255,255,255,0.12);
+  --text: #e6edf3;
+  --muted: #8b949e;
+}
+
+body {
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse 100% 80% at 50% -20%, #1f3a5f 0%, var(--bg) 55%);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  gap: 10px;
+  overflow-x: hidden;
+}
+
+h1 {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 28px rgba(88,166,255,0.35);
+}
+
+#main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 960px;
+  width: 100%;
+}
+
+#game-wrap {
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  background: linear-gradient(180deg, #101820 0%, #070b10 100%);
+}
+
+#board {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 168px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.panel h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  margin: 4px 0;
+}
+
+#next-canvas {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  background: rgba(0,0,0,0.35);
+  border-radius: 6px;
+}
+
+#hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.45;
+  max-width: 160px;
+}
+
+#controls-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 640px;
+}
+
+button, select {
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn {
+  background: linear-gradient(180deg, #238636, #1f6feb);
+  color: #fff;
+  border: 1px solid rgba(240,246,252,0.12);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #21262d;
+  border-color: var(--border);
+}
+
+.lbl {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* 모달 */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+#overlay.show { display: flex; }
+
+.modal {
+  background: #161b22;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  width: min(420px, 100%);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+}
+
+.modal h2 { font-size: 1.1rem; margin-bottom: 10px; }
+
+#name-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin: 8px 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0d1117;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.modal-close-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.rank-list {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.rank-list .rk { display: grid; grid-template-columns: 2em 1fr auto auto; gap: 6px; }
+.rank-list .head { font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<h1>고전 테트리스</h1>
+
+<div id="controls-panel">
+  <select id="start-level"></select>
+  <button type="button" class="btn" id="btn-start" onclick="window.startTetrisGame && window.startTetrisGame()">게임 시작</button>
+  <button type="button" class="btn btn-secondary" id="btn-pause" disabled>일시정지</button>
+</div>
+
+<div id="main">
+  <div id="game-wrap">
+    <canvas id="board" width="300" height="600" aria-label="테트리스 보드"></canvas>
+  </div>
+  <div id="side">
+    <div class="panel">
+      <h3>정보</h3>
+      <div class="stat-row"><span>점수</span><strong id="score">0</strong></div>
+      <div class="stat-row"><span>레벨</span><strong id="level">0</strong></div>
+      <div class="stat-row"><span>총 클리어 줄</span><strong id="lines">0</strong></div>
+    </div>
+    <div class="panel">
+      <h3>다음 블럭</h3>
+      <canvas id="next-canvas" width="120" height="120"></canvas>
+    </div>
+    <div class="panel" id="hint">
+      ← → 이동 · ↑ 또는 Z/X 회전 · ↓ 소프트 드롭 · Space 하드 드롭<br>
+      폭탄은 무작위로 나오거나, 일반 조각 큐 기준 최대 약 10연속 후 반드시 1번 나옵니다.
+    </div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="modal" id="modal-gameover">
+    <h2 id="modal-title">게임 오버</h2>
+    <p id="modal-score"></p>
+    <label for="name-input">플레이어 이름을 입력하세요.</label>
+    <input type="text" id="name-input" maxlength="24" placeholder="이름 입력" autocomplete="off" />
+    <div class="modal-actions">
+      <button type="button" class="btn" id="btn-save-record">확인</button>
+    </div>
+    <div class="rank-list" id="rank-list"></div>
+    <div class="modal-close-actions">
+      <button type="button" class="btn btn-secondary" id="btn-close-modal" disabled>닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const COLS = 10;
+  const ROWS = 20;
+  const HIDDEN = 2;
+  const TOTAL_ROWS = ROWS + HIDDEN;
+
+  const CELL = 30;
+  /** 폭탄: 일반 테트리스 조각이 실제로 10개 나온 뒤에만 1번 큐에 넣음 */
+  const BOMB_AFTER_NORMAL_PIECES = 10;
+
+  const STORAGE_KEY = 'youngil_tetris_records_v1';
+  /** Tetris_record.log와 동일 형식의 한 줄씩 브라우저 localStorage에 누적 */
+  const LOG_STORAGE_KEY = 'youngil_tetris_Tetris_record_log_v1';
+
+  /** NES(NTSC) 레벨별 그리드 셀 1칸 내리는 데 필요한 프레임 수 — TetrisWiki 기준 근사 */
+  const GRAVITY_FRAMES = [];
+  const gf = [
+    48,43,38,33,28,23,18,13,8,6,
+    5,5,5,4,4,4,3,3,3,2,
+    2,2,2,2,2,2,2,2,2,1,
+    1,1,1,1
+  ];
+  for (let i = 0; i < gf.length; i++) GRAVITY_FRAMES.push(gf[i]);
+  function gravityMsForLevel(lvl) {
+    const f = GRAVITY_FRAMES[Math.min(Math.max(0, lvl), GRAVITY_FRAMES.length - 1)];
+    return (f / 60) * 1000;
+  }
+
+  /** NES A타입 레벨 상승: 첫 레벨업 목표 줄 수 후 10줄마다 레벨+1 */
+  function linesForFirstLevelUp(startLevel) {
+    const sl = Math.max(0, Math.min(19, startLevel | 0));
+    return Math.min(sl * 10 + 10, Math.max(100, sl * 10 - 50));
+  }
+
+  /** 도형: 문자는 편의용. 폭탄은 단칸 회전 무시 */
+  const SHAPES = {
+    I: [
+      [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }],
+      [{ x: 1, y: -2 }, { x: 1, y: -1 }, { x: 1, y: 0 }, { x: 1, y: 1 }]
+    ],
+    O: [
+      [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }]
+    ],
+    T: [
+      [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }],
+      [{ x: 0, y: -1 }, { x: -1, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 1 }],
+      [{ x: 0, y: -1 }, { x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }],
+      [{ x: 0, y: -1 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }]
+    ],
+    S: [
+      [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: -1, y: 1 }, { x: 0, y: 1 }],
+      [{ x: 0, y: -1 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }]
+    ],
+    Z: [
+      [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }],
+      [{ x: 1, y: -1 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }]
+    ],
+    J: [
+      [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: -1, y: 1 }],
+      [{ x: 0, y: -1 }, { x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }],
+      [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: -1 }],
+      [{ x: -1, y: -1 }, { x: 0, y: -1 }, { x: 0, y: 0 }, { x: 0, y: 1 }]
+    ],
+    L: [
+      [{ x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }],
+      [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: 0, y: 0 }, { x: 0, y: 1 }],
+      [{ x: -1, y: -1 }, { x: -1, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }],
+      [{ x: 0, y: -1 }, { x: 0, y: 0 }, { x: -1, y: 1 }, { x: 0, y: 1 }]
+    ],
+    BOMB: [
+      [{ x: 0, y: 0 }]
+    ]
+  };
+
+  const COLORS = {
+    I: '#58a6ff',
+    O: '#f0c14b',
+    T: '#a371f7',
+    S: '#3fb950',
+    Z: '#f85149',
+    J: '#388bfd',
+    L: '#db6d28',
+    BOMB: '#ff6b00'
+  };
+
+  /** 필수 요소 검사 후 참조 할당(getContext 포함). 실패 시 false */
+  let canvas,
+    ctx,
+    nextCanvas,
+    nextCtx,
+    elScore,
+    elLevel,
+    elLines,
+    elStartLevel,
+    btnStart,
+    btnPause,
+    overlay,
+    modalTitle,
+    modalScore,
+    nameInput,
+    btnSaveRecord,
+    btnCloseModal,
+    rankListEl;
+
+  function bindDomOnce() {
+    if (canvas && ctx && nextCanvas && nextCtx) return true;
+
+    canvas = document.getElementById('board');
+    nextCanvas = document.getElementById('next-canvas');
+    elScore = document.getElementById('score');
+    elLevel = document.getElementById('level');
+    elLines = document.getElementById('lines');
+    elStartLevel = document.getElementById('start-level');
+    btnStart = document.getElementById('btn-start');
+    btnPause = document.getElementById('btn-pause');
+    overlay = document.getElementById('overlay');
+    modalTitle = document.getElementById('modal-title');
+    modalScore = document.getElementById('modal-score');
+    nameInput = document.getElementById('name-input');
+    btnSaveRecord = document.getElementById('btn-save-record');
+    btnCloseModal = document.getElementById('btn-close-modal');
+    rankListEl = document.getElementById('rank-list');
+
+    if (
+      !canvas ||
+      typeof canvas.getContext !== 'function' ||
+      !nextCanvas ||
+      typeof nextCanvas.getContext !== 'function' ||
+      !elStartLevel ||
+      !btnStart ||
+      !btnPause ||
+      !overlay ||
+      !elScore ||
+      !elLevel ||
+      !elLines ||
+      !modalTitle ||
+      !modalScore ||
+      !nameInput ||
+      !btnSaveRecord ||
+      !btnCloseModal
+    ) {
+      console.error('[테트리스] 필수 HTML 요소를 찾지 못했습니다. 파일을 페이지 전체로 연 뒤 F12 콘솔을 확인하세요.');
+      return false;
+    }
+
+    try {
+      ctx = canvas.getContext('2d');
+      nextCtx = nextCanvas.getContext('2d');
+    } catch (e) {
+      console.error('[테트리스] Canvas 초기화 실패:', e);
+      return false;
+    }
+    if (!ctx || !nextCtx) return false;
+
+    while (elStartLevel.firstChild) elStartLevel.removeChild(elStartLevel.firstChild);
+    for (let i = 0; i <= 19; i++) {
+      const o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = '레벨 ' + (i + 1);
+      elStartLevel.appendChild(o);
+    }
+    elStartLevel.value = '0';
+    return true;
+  }
+
+  let board = [];
+  let pause = false;
+  let bombBusy = false;
+  let running = false;
+  let lastScore = 0;
+  let lastRank = '-';
+
+  let current = null;
+  let nextPiece = null;
+  /** 마지막 폭탄 이후 실제로 등장한 일반(비폭탄) 조각 수 */
+  let normalsSpawnedSinceBomb = 0;
+  let gravityMs = gravityMsForLevel(0);
+  let fallAccumulator = 0;
+  let startLevelChosen = 0;
+  let level = 0;
+  let linesTotal = 0;
+  /** NES식: 시작 레벨에 따른 첫 레벨업까지 필요 줄 수, 이후 매 레벨마다 10줄 */
+  let pendingLinesForNextLevel = 0;
+  let score = 0;
+  let rafId = null;
+  let lastTs = 0;
+
+  function requestFrame(fn) {
+    if (typeof window.requestAnimationFrame === 'function') {
+      return window.requestAnimationFrame(fn);
+    }
+    return window.setTimeout(() => fn(window.performance ? window.performance.now() : Date.now()), 16);
+  }
+
+  function cancelFrame(id) {
+    if (id == null) return;
+    if (typeof window.cancelAnimationFrame === 'function') {
+      window.cancelAnimationFrame(id);
+    } else {
+      window.clearTimeout(id);
+    }
+  }
+
+  let audioReady = false;
+  let audioCtx = null;
+
+  function ensureAudio() {
+    try {
+      if (!audioReady) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+          audioCtx = new AC();
+          audioReady = true;
+        }
+      } else if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    } catch (e) {
+      audioReady = false;
+      audioCtx = null;
+      console.warn('[테트리스] 오디오 초기화 실패. 효과음 없이 계속합니다:', e);
+    }
+  }
+
+  function beep(freq, dur, type, vol) {
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type || 'square';
+    o.frequency.value = freq;
+    g.gain.value = vol != null ? vol : 0.08;
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    g.gain.setValueAtTime(g.gain.value, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+
+  /** 블록 결합(고정) */
+  function sfxLock() {
+    ensureAudio();
+    if (!audioCtx) return;
+    beep(180, 0.045, 'triangle', 0.12);
+  }
+
+  /** 줄 삭제 */
+  function sfxClear(lines) {
+    ensureAudio();
+    if (!audioCtx) return;
+    const base = 320 + Math.min(lines, 4) * 80;
+    for (let i = 0; i < Math.min(lines, 4); i++) {
+      setTimeout(() => beep(base + i * 60, 0.07, 'square', 0.09), i * 45);
+    }
+  }
+
+  /** 폭탄 */
+  function sfxBomb() {
+    ensureAudio();
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(420, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.25);
+    g.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    o.start(t);
+    o.stop(t + 0.3);
+  }
+
+  function emptyBoard() {
+    board = [];
+    for (let r = 0; r < TOTAL_ROWS; r++) {
+      board[r] = [];
+      for (let c = 0; c < COLS; c++) board[r][c] = 0;
+    }
+  }
+
+  function randomNormalType() {
+    const keys = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+    return keys[(Math.random() * keys.length) | 0];
+  }
+
+  /** 다음 대기 조각 1개. 정상 블럭 10개가 실제로 나온 뒤에만 폭탄을 예약한다. */
+  function rollQueuedPiece() {
+    if (normalsSpawnedSinceBomb >= BOMB_AFTER_NORMAL_PIECES) {
+      return 'BOMB';
+    }
+    return randomNormalType();
+  }
+
+  function createPieceState(type) {
+    const rots = SHAPES[type];
+    const cells = rots[0];
+    let minY = 0;
+    for (let i = 0; i < cells.length; i++) minY = Math.min(minY, cells[i].y);
+    return {
+      type,
+      rot: 0,
+      x: Math.floor(COLS / 2) - 1,
+      y: HIDDEN - minY
+    };
+  }
+
+  function spawnNext() {
+    let t = nextPiece;
+    if (t == null) t = rollQueuedPiece();
+    if (!SHAPES[t]) t = randomNormalType();
+
+    current = createPieceState(t);
+    if (!tryFitSpawnPosition()) {
+      gameOver();
+      return;
+    }
+    if (current.type === 'BOMB') {
+      normalsSpawnedSinceBomb = 0;
+    } else {
+      normalsSpawnedSinceBomb++;
+    }
+    nextPiece = rollQueuedPiece();
+    if (!SHAPES[nextPiece]) nextPiece = randomNormalType();
+    drawNext();
+  }
+
+  /** 스폰 직후 겹침이면 가로 킥으로 한 번만 보정 (즉시 게임오버 완화) */
+  function tryFitSpawnPosition() {
+    if (!collide(current, 0, 0)) return true;
+    const ox = current.x;
+    const kicks = [-1, 1, -2, 2];
+    for (let i = 0; i < kicks.length; i++) {
+      current.x = ox + kicks[i];
+      if (!collide(current, 0, 0)) return true;
+    }
+    current.x = ox;
+    return false;
+  }
+
+  function getCells(piece) {
+    const rots = SHAPES[piece.type];
+    const rot = piece.type === 'BOMB' ? 0 : piece.rot % rots.length;
+    return rots[rot];
+  }
+
+  function collide(piece, dx, dy, rotDelta = 0) {
+    const test = {
+      type: piece.type,
+      rot: piece.type === 'BOMB' ? 0 : (piece.rot + rotDelta + SHAPES[piece.type].length) % SHAPES[piece.type].length,
+      x: piece.x + dx,
+      y: piece.y + dy
+    };
+    const cells = getCells(test);
+    for (let i = 0; i < cells.length; i++) {
+      const cx = test.x + cells[i].x;
+      const cy = test.y + cells[i].y;
+      if (cx < 0 || cx >= COLS || cy >= TOTAL_ROWS) return true;
+      if (cy >= 0 && board[cy][cx]) return true;
+    }
+    return false;
+  }
+
+  function mergePiece(piece) {
+    const cells = getCells(piece);
+    for (let i = 0; i < cells.length; i++) {
+      const cx = piece.x + cells[i].x;
+      const cy = piece.y + cells[i].y;
+      if (cy >= 0 && cy < TOTAL_ROWS && cx >= 0 && cx < COLS) {
+        board[cy][cx] = piece.type;
+      }
+    }
+  }
+
+  function clearFullLines() {
+    const newRows = [];
+    let cleared = 0;
+    for (let r = 0; r < TOTAL_ROWS; r++) {
+      const full = board[r].every((c) => c !== 0);
+      if (full) cleared++;
+      else newRows.push(board[r]);
+    }
+    while (newRows.length < TOTAL_ROWS) {
+      const row = [];
+      for (let c = 0; c < COLS; c++) row.push(0);
+      newRows.unshift(row);
+    }
+    board = newRows;
+    return cleared;
+  }
+
+  /** NES A형: 시작 레벨에 따른 첫 목표 줄 수 달성 시 레벨+1 후에는 10줄마다 레벨+1 */
+  function registerClears(clearedLines) {
+    if (!clearedLines) return;
+    linesTotal += clearedLines;
+    score += clearedLines * 50;
+    sfxClear(clearedLines);
+    let remain = clearedLines;
+    while (remain > 0) {
+      const step = Math.min(remain, pendingLinesForNextLevel);
+      pendingLinesForNextLevel -= step;
+      remain -= step;
+      if (pendingLinesForNextLevel === 0) {
+        level += 1;
+        elLevel.textContent = String(level + 1);
+        gravityMs = gravityMsForLevel(level);
+        pendingLinesForNextLevel = 10;
+      }
+    }
+  }
+
+  function tryRotate() {
+    if (!current || pause || bombBusy || !running) return;
+    if (current.type === 'BOMB') return;
+    if (!collide(current, 0, 0, 1)) {
+      current.rot = (current.rot + 1) % SHAPES[current.type].length;
+      return;
+    }
+    const kicks = [-1, 1, -2, 2];
+    for (let i = 0; i < kicks.length; i++) {
+      const k = kicks[i];
+      if (!collide(current, k, 0, 1)) {
+        current.x += k;
+        current.rot = (current.rot + 1) % SHAPES[current.type].length;
+        return;
+      }
+    }
+  }
+
+  function hardDrop() {
+    if (!current || pause || bombBusy || !running) return;
+    let dy = 0;
+    while (!collide(current, 0, dy + 1, 0)) dy++;
+    current.y += dy;
+    lockPiece();
+  }
+
+  function lockPiece() {
+    if (!current) return;
+    if (current.type === 'BOMB') {
+      score += 10;
+      const bx = current.x;
+      const by = current.y;
+      const hitY = by + 1 < TOTAL_ROWS && board[by + 1][bx] ? by + 1 : by;
+      current = null;
+      runBombEffect(bx, hitY);
+      return;
+    }
+    mergePiece(current);
+    score += 10;
+    sfxLock();
+    const cleared = clearFullLines();
+    if (cleared > 0) registerClears(cleared);
+    current = null;
+    gravityMs = gravityMsForLevel(level);
+    spawnNext();
+    elScore.textContent = String(score);
+    elLines.textContent = String(linesTotal);
+    draw();
+  }
+
+  function runBombEffect(cx, cy) {
+    sfxBomb();
+    const targets = [];
+    for (let r = Math.max(0, cy - 1); r <= Math.min(TOTAL_ROWS - 1, cy + 1); r++) {
+      for (let c = Math.max(0, cx - 1); c <= Math.min(COLS - 1, cx + 1); c++) {
+        if (board[r][c]) targets.push({ r, c });
+      }
+    }
+    for (let i = targets.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      const t = targets[i];
+      targets[i] = targets[j];
+      targets[j] = t;
+    }
+    bombBusy = true;
+    let idx = 0;
+
+    /** 예외(beep 등) 시 setTimeout 연쇄가 끊기면 bombBusy에 걸려 멈춤 → 반드시 finally에서 해제 */
+    function finalizeBombWave() {
+      try {
+        const cleared = clearFullLines();
+        if (cleared > 0) registerClears(cleared);
+        elScore.textContent = String(score);
+        elLines.textContent = String(linesTotal);
+        gravityMs = gravityMsForLevel(level);
+        spawnNext();
+      } catch (e) {
+        console.error('[테트리스] 폭탄 후 속 처리 오류:', e);
+        gameOver();
+      } finally {
+        bombBusy = false;
+      }
+      try {
+        draw();
+      } catch (e2) {
+        console.error('[테트리스] 폭탄 후 draw 오류:', e2);
+      }
+    }
+
+    function step() {
+      if (idx >= targets.length) {
+        finalizeBombWave();
+        return;
+      }
+      const tt = targets[idx++];
+      try {
+        board[tt.r][tt.c] = 0;
+      } catch (e) {
+        console.error('[테트리스] 폭탄 블록 제거 오류:', e);
+      }
+      try {
+        beep(90 + Math.random() * 40, 0.02, 'square', 0.04);
+      } catch (_) {}
+      try {
+        draw();
+      } catch (_) {}
+      setTimeout(step, 55);
+    }
+    step();
+  }
+
+  function resetGameState() {
+    emptyBoard();
+    score = 0;
+    bombBusy = false;
+    linesTotal = 0;
+    startLevelChosen = parseInt(elStartLevel.value, 10) || 0;
+    level = startLevelChosen;
+    elLevel.textContent = String(level + 1);
+    elLines.textContent = '0';
+    elScore.textContent = '0';
+    pendingLinesForNextLevel = linesForFirstLevelUp(startLevelChosen);
+    gravityMs = gravityMsForLevel(level);
+    fallAccumulator = 0;
+    current = null;
+    normalsSpawnedSinceBomb = 0;
+    /** 첫 낙하 조각은 항상 일반 테트로미노(폭탄 제외) */
+    nextPiece = randomNormalType();
+    spawnNext();
+  }
+
+  function gameOver() {
+    running = false;
+    pause = false;
+    bombBusy = false;
+    btnPause.disabled = true;
+    cancelFrame(rafId);
+    rafId = null;
+    lastScore = score;
+    modalScore.textContent = '최종 점수: ' + score;
+    overlay.classList.add('show');
+    nameInput.value = '';
+    modalTitle.textContent = '게임 오버 — 이름 입력';
+    btnSaveRecord.disabled = false;
+    btnCloseModal.disabled = true;
+    lastRank = computeRankIfInserted(lastScore);
+    renderRankPreview();
+    setTimeout(() => nameInput.focus(), 80);
+  }
+
+  function loadRecords() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveRecords(arr) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  function computeRankIfInserted(newScore) {
+    const rec = loadRecords();
+    const higher = rec.filter((r) => r.score > newScore).length;
+    return higher + 1;
+  }
+
+  function renderRankPreview() {
+    if (!rankListEl) return;
+    const rec = sortedRecords(loadRecords());
+    const lines = [];
+    lines.push('<div class="rk head"><span>#</span><span>이름</span><span>점수</span><span>일시</span></div>');
+    for (let i = 0; i < 10; i++) {
+      if (i < rec.length) {
+        const r = rec[i];
+        const d = r.t ? new Date(r.t) : new Date();
+        const ds = d.toLocaleString('ko-KR', { hour12: false });
+        lines.push('<div class="rk"><span>' + (i + 1) + '</span><span>' + esc(r.name) + '</span><span>' + r.score + '</span><span>' + ds + '</span></div>');
+      } else {
+        lines.push('<div class="rk"><span>' + (i + 1) + '</span><span>—</span><span>—</span><span>—</span></div>');
+      }
+    }
+    lines.push('<p style="margin-top:12px;color:#58a6ff">이번 점수 예상 순위: <strong>' + lastRank + '위</strong> (저장 후 갱신)</p>');
+    rankListEl.innerHTML = lines.join('');
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function sortedRecords(entries) {
+    return entries.slice().sort((a, b) => b.score - a.score || a.t - b.t);
+  }
+
+  function appendTetrisRecordLine(rank, name, score, ts) {
+    try {
+      const prev = localStorage.getItem(LOG_STORAGE_KEY) || '';
+      const line =
+        new Date(ts).toISOString() +
+        '\t|\t' +
+        rank +
+        '\t|\t' +
+        name +
+        '\t|\t' +
+        score +
+        '\r\n';
+      localStorage.setItem(LOG_STORAGE_KEY, prev + line);
+    } catch (e) {
+      console.warn('[테트리스] 로컬 기록 로그 저장 실패:', e);
+    }
+  }
+
+  function drawCell(context, x, y, color) {
+    const px = x * CELL;
+    const py = y * CELL;
+    context.fillStyle = color;
+    context.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+    context.strokeStyle = 'rgba(255,255,255,0.25)';
+    context.lineWidth = 1;
+    context.strokeRect(px + 0.5, py + 0.5, CELL - 1, CELL - 1);
+  }
+
+  function draw() {
+    ctx.fillStyle = '#070b10';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let r = HIDDEN; r < TOTAL_ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const v = board[r][c];
+        if (v) {
+          drawCell(ctx, c, r - HIDDEN, COLORS[v] || '#888');
+        }
+      }
+    }
+
+    if (current) {
+      const cells = getCells(current);
+      for (let i = 0; i < cells.length; i++) {
+        const cy = current.y + cells[i].y;
+        if (cy >= HIDDEN) {
+          const cx = current.x + cells[i].x;
+          if (current.type === 'BOMB') {
+            const gx = cx * CELL;
+            const gy = (cy - HIDDEN) * CELL;
+            ctx.beginPath();
+            ctx.arc(gx + CELL / 2, gy + CELL / 2, CELL * 0.38, 0, Math.PI * 2);
+            ctx.fillStyle = '#331100';
+            ctx.fill();
+            ctx.strokeStyle = '#ffaa66';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          } else {
+            drawCell(ctx, cx, cy - HIDDEN, COLORS[current.type]);
+          }
+        }
+      }
+    }
+  }
+
+  function drawNext() {
+    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    nextCtx.fillStyle = '#05070a';
+    nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+    if (!nextPiece) return;
+    const cells = SHAPES[nextPiece][0];
+    let minX = 0;
+    let maxX = 0;
+    let minY = 0;
+    let maxY = 0;
+    for (let i = 0; i < cells.length; i++) {
+      minX = Math.min(minX, cells[i].x);
+      maxX = Math.max(maxX, cells[i].x);
+      minY = Math.min(minY, cells[i].y);
+      maxY = Math.max(maxY, cells[i].y);
+    }
+    const bw = (maxX - minX + 1) * CELL;
+    const bh = (maxY - minY + 1) * CELL;
+    const ox = (nextCanvas.width - bw) / 2 - minX * CELL - CELL / 2;
+    const oy = (nextCanvas.height - bh) / 2 - minY * CELL - CELL / 2;
+    for (let i = 0; i < cells.length; i++) {
+      const gx = ox + cells[i].x * CELL;
+      const gy = oy + cells[i].y * CELL;
+      if (nextPiece === 'BOMB') {
+        nextCtx.beginPath();
+        nextCtx.arc(gx + CELL / 2, gy + CELL / 2, CELL * 0.38, 0, Math.PI * 2);
+        nextCtx.fillStyle = '#331100';
+        nextCtx.fill();
+        nextCtx.strokeStyle = '#ffaa66';
+        nextCtx.stroke();
+      } else {
+        nextCtx.fillStyle = COLORS[nextPiece];
+        nextCtx.fillRect(gx + 2, gy + 2, CELL - 4, CELL - 4);
+        nextCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+        nextCtx.strokeRect(gx + 1.5, gy + 1.5, CELL - 3, CELL - 3);
+      }
+    }
+  }
+
+  function tick(ts) {
+    if (!running) return;
+    if (!lastTs) lastTs = ts;
+    const dt = ts - lastTs;
+    lastTs = ts;
+    if (!pause && !bombBusy && current) {
+      fallAccumulator += dt;
+      /** 소프트 드롭: 약간 빠르게 느껴지도록 사용자가 아래키 눌렀을 때 별도 빠르기 */
+      const mult = keysDown.soft ? 6 : 1;
+      while (fallAccumulator >= gravityMs / mult) {
+        fallAccumulator -= gravityMs / mult;
+        if (!collide(current, 0, 1, 0)) {
+          current.y++;
+        } else {
+          lockPiece();
+          draw();
+          rafId = requestFrame(tick);
+          return;
+        }
+      }
+    }
+    draw();
+    rafId = requestFrame(tick);
+  }
+
+  const keysDown = { left: false, right: false, soft: false, repeatL: null, repeatR: null };
+
+  function repeatStart(dir) {
+    if (keysDown.repeatL) clearInterval(keysDown.repeatL);
+    if (keysDown.repeatR) clearInterval(keysDown.repeatR);
+    const iv = setInterval(() => move(dir), 77);
+    if (dir === -1) keysDown.repeatL = iv;
+    else keysDown.repeatR = iv;
+  }
+
+  function move(dx) {
+    if (!running || pause || bombBusy || !current) return;
+    if (!collide(current, dx, 0, 0)) current.x += dx;
+  }
+
+  let tetrisUiAttached = false;
+
+  function startTetrisGame() {
+    const originalStartText = btnStart ? btnStart.textContent : '게임 시작';
+    if (btnStart) btnStart.textContent = '시작 중...';
+    try {
+      if (!bindDomOnce()) {
+        if (btnStart) btnStart.textContent = originalStartText;
+        return;
+      }
+      ensureAudio();
+      overlay.classList.remove('show');
+      running = true;
+      pause = false;
+      btnPause.disabled = false;
+      btnPause.textContent = '일시정지';
+      resetGameState();
+      lastTs = 0;
+      fallAccumulator = 0;
+      draw();
+      cancelFrame(rafId);
+      rafId = requestFrame(tick);
+      btnStart.textContent = '다시 시작';
+    } catch (err) {
+      console.error('[테트리스] 게임 시작 오류:', err);
+      running = false;
+      if (btnPause) btnPause.disabled = true;
+      if (btnStart) btnStart.textContent = originalStartText;
+    }
+  }
+
+  window.startTetrisGame = startTetrisGame;
+
+  function attachGameUi() {
+    if (tetrisUiAttached) return;
+    if (!bindDomOnce()) {
+      console.error(
+        '[테트리스] DOM을 초기화할 수 없습니다. 테트리스.html 파일만 직접 연 뒤 F12 → 콘솔 오류를 확인하세요.'
+      );
+      return;
+    }
+    tetrisUiAttached = true;
+    btnStart.onclick = startTetrisGame;
+    window.addEventListener('keydown', (e) => {
+      ensureAudio();
+      if (overlay.classList.contains('show') && document.activeElement === nameInput) {
+        return;
+      }
+      if (!running) return;
+
+      switch (e.code) {
+        case 'ArrowLeft':
+          if (!keysDown.left) {
+            move(-1);
+            keysDown.left = true;
+            if (keysDown.repeatL) clearInterval(keysDown.repeatL);
+            keysDown.repeatL = setTimeout(() => repeatStart(-1), 280);
+          }
+          e.preventDefault();
+          break;
+        case 'ArrowRight':
+          if (!keysDown.right) {
+            move(1);
+            keysDown.right = true;
+            if (keysDown.repeatR) clearInterval(keysDown.repeatR);
+            keysDown.repeatR = setTimeout(() => repeatStart(1), 280);
+          }
+          e.preventDefault();
+          break;
+        case 'ArrowDown':
+          keysDown.soft = true;
+          e.preventDefault();
+          break;
+        case 'ArrowUp':
+          tryRotate();
+          e.preventDefault();
+          break;
+        case 'KeyZ':
+        case 'KeyX':
+          tryRotate();
+          e.preventDefault();
+          break;
+        case 'Space':
+          hardDrop();
+          e.preventDefault();
+          break;
+        default:
+          break;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      switch (e.code) {
+        case 'ArrowLeft':
+          keysDown.left = false;
+          if (keysDown.repeatL) clearInterval(keysDown.repeatL);
+          keysDown.repeatL = null;
+          break;
+        case 'ArrowRight':
+          keysDown.right = false;
+          if (keysDown.repeatR) clearInterval(keysDown.repeatR);
+          keysDown.repeatR = null;
+          break;
+        case 'ArrowDown':
+          keysDown.soft = false;
+          break;
+        default:
+          break;
+      }
+    });
+
+    btnPause.addEventListener('click', () => {
+      if (!running) return;
+      pause = !pause;
+      btnPause.textContent = pause ? '계속' : '일시정지';
+    });
+
+    btnSaveRecord.addEventListener('click', () => {
+      const name = (nameInput.value || '').trim();
+      const finalName = name || '무기명';
+      const rec = loadRecords();
+      const entry = {
+        name: finalName.slice(0, 24),
+        score: lastScore,
+        t: Date.now()
+      };
+      rec.push(entry);
+      saveRecords(rec);
+
+      const sorted = sortedRecords(rec);
+      let rk = sorted.length;
+      for (let si = 0; si < sorted.length; si++) {
+        if (
+          sorted[si].t === entry.t &&
+          sorted[si].name === entry.name &&
+          sorted[si].score === entry.score
+        ) {
+          rk = si + 1;
+          break;
+        }
+      }
+      lastRank = String(rk);
+
+      btnSaveRecord.disabled = true;
+      btnCloseModal.disabled = false;
+      appendTetrisRecordLine(rk, entry.name, entry.score, entry.t);
+      renderRankPreview();
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+      overlay.classList.remove('show');
+    });
+
+    emptyBoard();
+    drawNext();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function tetrisDomReady() {
+      document.removeEventListener('DOMContentLoaded', tetrisDomReady);
+      attachGameUi();
+    });
+  } else {
+    attachGameUi();
+  }
+})();
+</script>
+</body>
+</html>
