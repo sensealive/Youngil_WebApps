@@ -1107,7 +1107,9 @@ button, select {
   const touchState = {
     pointerId: null,
     holdTimer: null,
-    softDropping: false
+    softDropping: false,
+    action: null,
+    startTime: 0
   };
 
   function clearTouchHold() {
@@ -1119,6 +1121,8 @@ button, select {
       keysDown.soft = false;
       touchState.softDropping = false;
     }
+    touchState.action = null;
+    touchState.startTime = 0;
   }
 
   function handleBoardPointerDown(e) {
@@ -1130,6 +1134,7 @@ button, select {
     clearTouchHold();
 
     touchState.pointerId = e.pointerId;
+    touchState.startTime = Date.now();
     if (canvas.setPointerCapture) {
       try {
         canvas.setPointerCapture(e.pointerId);
@@ -1140,11 +1145,13 @@ button, select {
     const xRatio = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
 
     if (xRatio < 0.35) {
+      touchState.action = 'left';
       move(-1);
     } else if (xRatio > 0.65) {
+      touchState.action = 'right';
       move(1);
     } else {
-      tryRotate();
+      touchState.action = 'rotate';
     }
 
     touchState.holdTimer = setTimeout(() => {
@@ -1158,7 +1165,13 @@ button, select {
   function handleBoardPointerEnd(e) {
     if (touchState.pointerId != null && e.pointerId !== touchState.pointerId) return;
     if (e.cancelable) e.preventDefault();
+    const action = touchState.action;
+    const wasSoftDropping = touchState.softDropping;
+    const elapsed = touchState.startTime ? Date.now() - touchState.startTime : 0;
     clearTouchHold();
+    if (action === 'rotate' && !wasSoftDropping && elapsed < 260) {
+      tryRotate();
+    }
     touchState.pointerId = null;
   }
 
