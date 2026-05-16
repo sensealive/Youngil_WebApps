@@ -4,10 +4,6 @@
 조보아
 왕조현
 선우은숙
-Tom
-Tim
-Yoon Hwan Seo
-So Yu Jin
 김민준
 이서연
 박도현
@@ -24,13 +20,13 @@ So Yu Jin
 전나리
 문성진
 홍가은
-남궁민
+남궁민수
 서지수
 안재현
 고은채
 장우진
 노하린
-황진우
+황진우희
 방미래
 심건우
 변소희
@@ -38,23 +34,27 @@ So Yu Jin
 마지원
 독고준
 천하늘
-James Kim
-Sarah Park
-Michael Lee
-Emily Cho
-David Jung
-Jessica Han
-Kevin Oh
-Amanda Shin
-Brian Yoo
-Christine Moon
-Daniel Kwon
-Sophia Lim
-Ryan Bae
-Mia Jang
-Nathan Song
-Olivia Choi
-Ethan Kang
-Isabella Yun
-Lucas Im
-Grace Seo
+김도윤
+이하린나
+박서준
+최유나
+정민재
+강하늘
+윤서아
+임지완
+한소희
+오지훈
+백유진
+신태오
+류다현
+전예서
+문하준
+홍서영
+남도현
+서민아주
+안주원
+고예림
+장하민
+노서진
+황유라
+방준서
