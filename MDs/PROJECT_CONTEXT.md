@@ -42,3 +42,11 @@
 - 원격 기준: `https://github.com/sensealive/<현재프로젝트명>`
 - 로컬 기준 경로: `D:\programming\Cursor\Cusor_Project`
 - 해당 로컬 경로로 최신 변경사항을 pull 합니다.
+
+## 관련 (Obsidian Vault)
+
+- [[../../02_Wiki/Youngil/Youngil|영일 사내 웹 도구 3형제]]
+- [[../../02_Wiki/WebApps/WebApps|정적 웹앱]]
+- 자매 프로젝트: [[../260507_Youngil_BusinessTrip/PROJECT_CONTEXT|출장 관리]] · [[../260501_Cursor_YoungilWebsite/PROJECT_CONTEXT|영일 웹사이트]]
+
+> 아래 링크는 Obsidian Vault(`HermesVault/03_Projects/`)에서 열 때 동작한다. GitHub에서는 일반 텍스트로 보인다.
