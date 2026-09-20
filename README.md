@@ -10,11 +10,11 @@
 
 | 파일 | 용도 |
 |------|------|
-| [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) | 프로젝트 배경·구조·규칙 |
-| [WORK_LOG.md](./WORK_LOG.md) | 작업 이력 |
-| [TODO.md](./TODO.md) | 할 일 |
-| [BUGS.md](./BUGS.md) | 알려진 이슈 |
-| [DECISIONS.md](./DECISIONS.md) | 설계·정책 결정 기록 |
+| [PROJECT_CONTEXT.md](./MDs/PROJECT_CONTEXT.md) | 프로젝트 배경·구조·규칙 |
+| [WORK_LOG.md](./MDs/WORK_LOG.md) | 작업 이력 |
+| [TODO.md](./MDs/TODO.md) | 할 일 |
+| [BUGS.md](./MDs/BUGS.md) | 알려진 이슈 |
+| [DECISIONS.md](./MDs/DECISIONS.md) | 설계·정책 결정 기록 |
 
 ## 환경 변수
 
